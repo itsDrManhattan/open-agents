@@ -13,7 +13,7 @@ type DiffLine = {
 
 const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
-function ToolSpinner() {
+export function ToolSpinner() {
   const [frame, setFrame] = useState(0);
 
   useEffect(() => {
@@ -26,7 +26,7 @@ function ToolSpinner() {
   return <Text color="yellow">{SPINNER_FRAMES[frame]} </Text>;
 }
 
-function ApprovalButtons({ approvalId }: { approvalId: string }) {
+export function ApprovalButtons({ approvalId }: { approvalId: string }) {
   const { chat } = useChatContext();
   const { addToolApprovalResponse } = useChat({
     chat,
@@ -418,7 +418,7 @@ function createEditDiffLines(
 
 // Simplified tool call renderer for subagent tool parts
 // Uses a looser type since these come from a different agent's tool set
-function SubagentToolCall({
+export function SubagentToolCall({
   part,
 }: {
   part: Parameters<typeof getToolName>[0];

@@ -8,6 +8,7 @@ import { useChat } from "@ai-sdk/react";
 import { renderMarkdown } from "./lib/markdown.js";
 import { useChatContext } from "./chat-context.js";
 import { ToolCall } from "./components/tool-call.js";
+import { TaskGroupView } from "./components/task-group-view.js";
 import { StatusBar } from "./components/status-bar.js";
 import { InputBox } from "./components/input-box.js";
 import { Header } from "./components/header.js";
@@ -100,6 +101,11 @@ const UserMessage = memo(function UserMessage({
   );
 });
 
+// Group consecutive task parts together while preserving order
+type RenderGroup =
+  | { type: "part"; part: TUIAgentUIMessagePart; index: number }
+  | { type: "task-group"; tasks: TUIAgentUIToolPart[]; startIndex: number };
+
 const AssistantMessage = memo(function AssistantMessage({
   message,
   activeApprovalId,
@@ -107,11 +113,64 @@ const AssistantMessage = memo(function AssistantMessage({
   message: TUIAgentUIMessage;
   activeApprovalId: string | null;
 }) {
+  // Group consecutive task parts together, keeping them in linear order
+  const renderGroups = useMemo(() => {
+    const groups: RenderGroup[] = [];
+    let currentTaskGroup: TUIAgentUIToolPart[] = [];
+    let taskGroupStartIndex = 0;
+
+    message.parts.forEach((part, index) => {
+      const isTask = isToolUIPart(part) && part.type === "tool-task";
+
+      if (isTask) {
+        if (currentTaskGroup.length === 0) {
+          taskGroupStartIndex = index;
+        }
+        currentTaskGroup.push(part);
+      } else {
+        // Flush any pending task group
+        if (currentTaskGroup.length > 0) {
+          groups.push({
+            type: "task-group",
+            tasks: currentTaskGroup,
+            startIndex: taskGroupStartIndex,
+          });
+          currentTaskGroup = [];
+        }
+        groups.push({ type: "part", part, index });
+      }
+    });
+
+    // Flush remaining task group
+    if (currentTaskGroup.length > 0) {
+      groups.push({
+        type: "task-group",
+        tasks: currentTaskGroup,
+        startIndex: taskGroupStartIndex,
+      });
+    }
+
+    return groups;
+  }, [message.parts]);
+
   return (
     <Box flexDirection="column">
-      {message.parts.map((part, index) =>
-        renderPart(part, `${message.id}-${index}`, activeApprovalId),
-      )}
+      {renderGroups.map((group) => {
+        if (group.type === "task-group") {
+          return (
+            <TaskGroupView
+              key={`task-group-${group.startIndex}`}
+              taskParts={group.tasks}
+              activeApprovalId={activeApprovalId}
+            />
+          );
+        }
+        return renderPart(
+          group.part,
+          `${message.id}-${group.index}`,
+          activeApprovalId
+        );
+      })}
     </Box>
   );
 });
