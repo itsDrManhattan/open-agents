@@ -65,6 +65,7 @@ To work through these todos, follow this pattern:
 ### Features
 - [ ] Add plan mode
 - [ ] Add automatic compaction approach as a tool
+- [ ] provider defined tools dynamic switch per request
 
 ## Technical Debt
 
@@ -73,3 +74,7 @@ To work through these todos, follow this pattern:
 ## Slack App (New)
 
 - [ ] Explore using Malte's chat SDK (vercel-labs/chat) for Slack interface
+
+### Misc
+
+- [ ] auth with web app
