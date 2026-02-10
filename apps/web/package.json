@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "drizzle-kit push",
     "build": "next build",
     "start": "next start",
     "lint": "oxlint",
@@ -55,6 +54,7 @@
     "streamdown": "^1.6.11",
     "swr": "^2.3.8",
     "tailwind-merge": "^3.4.0",
+    "workflow": "^4.1.0-beta.52",
     "zod": "catalog:"
   },
   "devDependencies": {
