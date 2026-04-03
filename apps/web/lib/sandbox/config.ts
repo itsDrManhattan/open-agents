@@ -35,12 +35,11 @@ export const DEFAULT_WORKING_DIRECTORY = "/vercel/sandbox";
 
 /**
  * Base snapshot for fresh cloud sandboxes.
- * - Current snapshot includes: bun + jq + agent-browser + chromium + code-server
- * - Previous snapshot includes: bun + jq + agent-browser + chromium
+ * - Current snapshot includes: bun + jq + agent-browser + chromium
+ * - Previous snapshot includes: bun + jq
  */
 export const DEFAULT_SANDBOX_BASE_SNAPSHOT_ID =
   process.env.VERCEL_SANDBOX_BASE_SNAPSHOT_ID ??
-  // Previous snapshot (bun + jq + agent-browser + chromium):
-  // "snap_C8tUFhwRXZky4MaFvTuwO7DH66wx"
-  // Current snapshot (bun + jq + agent-browser + chromium + code-server):
-  "snap_6IhQgcSngY9IpCp71vIQqL2khSP9";
+  // Previous snapshot (bun + jq): "snap_MQ0NqdLL5qEXiYusgWL3K0yaMmql"
+  // Current snapshot (bun + jq + agent-browser + chromium):
+  "snap_C8tUFhwRXZky4MaFvTuwO7DH66wx";
