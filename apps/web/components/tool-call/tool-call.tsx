@@ -68,7 +68,6 @@ export function ToolCall({
     case "tool-task":
       return <TaskRenderer part={part} state={state} {...approvalProps} />;
     case "tool-todo_write":
-      // Todo tool doesn't require approval, so approvalProps are intentionally omitted
       return <TodoRenderer part={part} state={state} />;
     case "tool-ask_user_question":
       // AskUserQuestion tool doesn't require approval, handled separately

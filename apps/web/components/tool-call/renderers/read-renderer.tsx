@@ -1,8 +1,18 @@
 "use client";
 
 import { toRelativePath } from "@open-harness/shared/lib/tool-state";
+import { FileText } from "lucide-react";
+import { File as DiffsFile } from "@pierre/diffs/react";
 import type { ToolRendererProps } from "@/app/lib/render-tool";
+import { defaultFileOptions } from "@/lib/diffs-config";
+import type { BaseCodeOptions } from "@pierre/diffs/react";
 import { ToolLayout } from "../tool-layout";
+import { FileNamePill } from "../file-name-pill";
+
+const partialReadFileOptions: BaseCodeOptions = {
+  ...defaultFileOptions,
+  disableLineNumbers: true,
+};
 
 export function ReadRenderer({
   part,
@@ -15,13 +25,12 @@ export function ReadRenderer({
   const rawFilePath = input?.filePath ?? "...";
   const filePath =
     rawFilePath === "..." ? rawFilePath : toRelativePath(rawFilePath, cwd);
-  const offset = input?.offset;
-  const limit = input?.limit;
 
   const output = part.state === "output-available" ? part.output : undefined;
   const totalLines = output?.totalLines;
   const startLine = output?.startLine;
   const endLine = output?.endLine;
+  const fileContent = output?.content;
   const isPartialRead =
     startLine !== undefined &&
     endLine !== undefined &&
@@ -34,47 +43,45 @@ export function ReadRenderer({
     ? { ...state, error: state.error ?? outputError }
     : state;
 
-  const hasExpandedContent = offset !== undefined || limit !== undefined;
+  // Strip line number prefixes ("N: ") from content for the code viewer
+  const cleanContent = fileContent
+    ? fileContent
+        .split("\n")
+        .map((line) => line.replace(/^\d+: /, ""))
+        .join("\n")
+    : undefined;
 
-  const expandedContent = hasExpandedContent ? (
-    <div className="space-y-2 text-sm">
-      <div>
-        <span className="text-muted-foreground">File: </span>
-        <code className="text-foreground">{filePath}</code>
-      </div>
-      {offset !== undefined && (
-        <div>
-          <span className="text-muted-foreground">Offset: </span>
-          <span className="text-foreground">line {offset}</span>
-        </div>
-      )}
-      {limit !== undefined && (
-        <div>
-          <span className="text-muted-foreground">Limit: </span>
-          <span className="text-foreground">{limit} lines</span>
-        </div>
-      )}
-      {totalLines !== undefined && (
-        <div>
-          <span className="text-muted-foreground">Total lines: </span>
-          <span className="text-foreground">{totalLines}</span>
-        </div>
-      )}
+  const fileOptions = isPartialRead
+    ? partialReadFileOptions
+    : defaultFileOptions;
+
+  const expandedContent = cleanContent ? (
+    <div className="max-h-96 overflow-auto rounded-md border border-border">
+      <DiffsFile
+        file={{ name: rawFilePath, contents: cleanContent }}
+        options={fileOptions}
+      />
     </div>
   ) : undefined;
+
+  const meta = isPartialRead
+    ? `[${startLine}–${endLine}]`
+    : totalLines !== undefined
+      ? `${totalLines} lines`
+      : undefined;
 
   return (
     <ToolLayout
       name="Read"
-      summary={filePath}
-      summaryClassName="font-mono"
-      meta={
-        isPartialRead
-          ? `[${startLine}–${endLine}]`
-          : totalLines !== undefined
-            ? `${totalLines} lines`
-            : undefined
+      icon={<FileText className="h-3.5 w-3.5" />}
+      summary={
+        filePath === "..." ? (
+          filePath
+        ) : (
+          <FileNamePill filePath={filePath} fullPath={rawFilePath} />
+        )
       }
+      meta={meta}
       state={mergedState}
       expandedContent={expandedContent}
       onApprove={onApprove}

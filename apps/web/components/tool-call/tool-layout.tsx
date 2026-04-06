@@ -1,7 +1,7 @@
 "use client";
 
 import type { ToolRenderState } from "@open-harness/shared/lib/tool-state";
-import { ChevronRight, Loader2 } from "lucide-react";
+import { CircleX, Loader2, Minus, Plus } from "lucide-react";
 import type React from "react";
 import { type ReactNode, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -9,9 +9,11 @@ import { ApprovalButtons } from "./approval-buttons";
 
 export type ToolLayoutProps = {
   name: string;
-  summary: string;
+  summary: ReactNode;
   summaryClassName?: string;
   meta?: ReactNode;
+  /** When true, push meta to the far right of the header row. */
+  rightAlignMeta?: boolean;
   state: ToolRenderState;
   output?: ReactNode;
   children?: ReactNode;
@@ -19,6 +21,9 @@ export type ToolLayoutProps = {
   onApprove?: (id: string) => void;
   onDeny?: (id: string, reason?: string) => void;
   defaultExpanded?: boolean;
+  /** Tool-specific icon (Lucide element). */
+  icon?: ReactNode;
+  /** @deprecated Use `icon` instead. */
   indicator?: ReactNode;
   nameClassName?: string;
 };
@@ -51,19 +56,10 @@ function hasRenderableContent(value: ReactNode) {
   );
 }
 
-const MAX_ERROR_PREVIEW_LENGTH = 72;
 const EXPANDED_CONTENT_TRANSITION_MS = 200;
 
 function trimErrorPrefix(message: string) {
   return message.replace(/^Error:\s*/i, "").trim();
-}
-
-function truncateText(value: string, maxLength: number) {
-  if (value.length <= maxLength) {
-    return value;
-  }
-
-  return `${value.slice(0, maxLength - 1).trimEnd()}…`;
 }
 
 export function ToolLayout({
@@ -71,6 +67,7 @@ export function ToolLayout({
   summary,
   summaryClassName,
   meta,
+  rightAlignMeta = false,
   state,
   output,
   children,
@@ -78,6 +75,7 @@ export function ToolLayout({
   onApprove,
   onDeny,
   defaultExpanded = false,
+  icon,
   indicator,
   nameClassName,
 }: ToolLayoutProps) {
@@ -87,15 +85,12 @@ export function ToolLayout({
   );
   const errorMessage =
     state.error && !state.denied ? trimErrorPrefix(state.error) : undefined;
-  const errorPreview = errorMessage
-    ? truncateText(errorMessage, MAX_ERROR_PREVIEW_LENGTH)
-    : undefined;
-  const hasErrorDetails = Boolean(errorMessage);
-  const hasExpandedDetails =
-    hasRenderableContent(expandedContent) || hasErrorDetails;
+  const hasError = Boolean(errorMessage);
+  const hasExpandedDetails = hasRenderableContent(expandedContent) || hasError;
   const hasOutput = hasRenderableContent(output);
   const hasMeta = hasRenderableContent(meta);
-  const hasSummary = summary.trim().length > 0;
+  const hasSummary =
+    typeof summary === "string" ? summary.trim().length > 0 : summary != null;
   const showRunningNotice =
     state.approvalRequested && !showApprovalButtons && !state.interrupted;
   const interruptedBadge = state.interrupted ? (
@@ -103,11 +98,15 @@ export function ToolLayout({
       Interrupted
     </span>
   ) : null;
-  const hasTrailingMeta =
-    hasMeta || interruptedBadge !== null || errorPreview !== undefined;
   const isExpandedPanelVisible = isExpanded && hasExpandedDetails;
   const [shouldRenderExpandedContent, setShouldRenderExpandedContent] =
     useState(defaultExpanded && hasExpandedDetails);
+
+  // Error state flags
+  const showErrorHeader = hasError;
+  const showErrorExpanded = hasError && isExpandedPanelVisible;
+  const hasTrailingMeta =
+    !showErrorHeader && (hasMeta || interruptedBadge !== null);
 
   useEffect(() => {
     if (!hasExpandedDetails) {
@@ -145,13 +144,19 @@ export function ToolLayout({
     setIsExpanded(nextExpanded);
   };
 
-  const headerIndicator = indicator ?? <StatusIndicator state={state} />;
+  // Resolve the icon to show in the header.
+  const isRunning = state.running;
+  const resolvedIcon = isRunning ? (
+    <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+  ) : (
+    (icon ?? indicator ?? <StatusIndicator state={state} />)
+  );
 
   return (
-    <div className="my-1.5 rounded-md border border-transparent bg-transparent py-0.5">
+    <div className="-mx-1.5 rounded-md border border-transparent bg-transparent">
       <div
         className={cn(
-          "flex min-w-0 select-none items-baseline gap-2 rounded-md py-0.5 pr-1 text-sm",
+          "group flex min-w-0 select-none items-center gap-2 rounded-md px-1.5 py-1 text-sm",
           hasExpandedDetails &&
             "cursor-pointer transition-colors hover:bg-muted/50",
         )}
@@ -168,58 +173,77 @@ export function ToolLayout({
           "aria-expanded": isExpanded,
         })}
       >
-        <span className="flex size-3.5 shrink-0 items-center justify-start self-center">
-          {headerIndicator}
-        </span>
-        <span
-          className={cn(
-            "shrink-0 font-medium leading-none",
-            state.denied || errorMessage ? "text-red-500" : "text-foreground",
-            nameClassName,
+        {/* Icon area */}
+        <span className="flex size-4 shrink-0 items-center justify-center text-muted-foreground/70">
+          {showErrorHeader ? (
+            <>
+              <CircleX className="h-3.5 w-3.5 text-red-500 group-hover:hidden" />
+              {isExpandedPanelVisible ? (
+                <Minus className="hidden h-3.5 w-3.5 text-muted-foreground group-hover:block" />
+              ) : (
+                <Plus className="hidden h-3.5 w-3.5 text-muted-foreground group-hover:block" />
+              )}
+            </>
+          ) : hasExpandedDetails && !isRunning ? (
+            <>
+              <span className="group-hover:hidden">{resolvedIcon}</span>
+              {isExpandedPanelVisible ? (
+                <Minus className="hidden h-3.5 w-3.5 text-muted-foreground group-hover:block" />
+              ) : (
+                <Plus className="hidden h-3.5 w-3.5 text-muted-foreground group-hover:block" />
+              )}
+            </>
+          ) : (
+            resolvedIcon
           )}
-        >
-          {name}
         </span>
 
-        <div className="flex min-w-0 flex-1 items-baseline gap-1.5 overflow-hidden">
-          {hasSummary && (
-            <span
-              className={cn(
-                "min-w-0 flex-1 truncate text-[13px] leading-none text-muted-foreground",
-                summaryClassName,
-              )}
-            >
-              {summary}
+        {/* Name + summary */}
+        {showErrorHeader ? (
+          <>
+            <span className="shrink-0 font-medium leading-none text-red-500">
+              Error
             </span>
-          )}
-
-          {hasTrailingMeta && (
+            <div className="flex min-w-0 flex-1 items-baseline gap-1.5 overflow-hidden">
+              <span className="min-w-0 flex-1 truncate font-mono text-[13px] leading-none text-red-400/80">
+                {errorMessage}
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
             <span
               className={cn(
-                "inline-flex min-w-0 items-center gap-1.5 text-[13px] leading-none text-muted-foreground",
-                errorPreview ? "shrink overflow-hidden" : "shrink-0",
+                "min-w-0 shrink truncate font-medium leading-none",
+                state.denied ? "text-red-500" : "text-foreground",
+                nameClassName,
               )}
             >
-              {meta}
-              {interruptedBadge}
-              {errorPreview && (
-                <span className="max-w-56 truncate text-[12px] text-red-600/80 dark:text-red-400/90 sm:max-w-72">
-                  {errorPreview}
+              {name}
+            </span>
+
+            <div className="flex min-w-0 flex-1 items-baseline gap-1.5 overflow-hidden">
+              {hasSummary && (
+                <span
+                  className={cn(
+                    "min-w-0 shrink truncate font-mono text-[13px] leading-none text-muted-foreground",
+                    summaryClassName,
+                  )}
+                >
+                  {summary}
                 </span>
               )}
-            </span>
-          )}
-        </div>
 
-        {hasExpandedDetails && (
-          <span className="ml-auto flex h-4 w-4 shrink-0 items-center justify-center self-center text-muted-foreground/70">
-            <ChevronRight
-              className={cn(
-                "h-3.5 w-3.5 transition-transform duration-200 ease-out motion-reduce:transition-none",
-                isExpandedPanelVisible && "rotate-90",
+              {rightAlignMeta && <span className="flex-1" />}
+
+              {hasTrailingMeta && (
+                <span className="inline-flex shrink-0 items-center gap-1.5 font-mono text-[12px] leading-none text-muted-foreground/60">
+                  {meta}
+                  {interruptedBadge}
+                </span>
               )}
-            />
-          </span>
+            </div>
+          </>
         )}
       </div>
 
@@ -270,16 +294,25 @@ export function ToolLayout({
           <div className="min-h-0">
             {shouldRenderExpandedContent && (
               <div className="space-y-2 pb-1">
-                {errorMessage && (
-                  <div className="space-y-1">
-                    <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-red-600 dark:text-red-400">
-                      Error
+                {showErrorExpanded &&
+                  !hasRenderableContent(expandedContent) && (
+                    <div className="overflow-hidden rounded-md border border-red-500/20 bg-red-500/5">
+                      <div className="flex min-w-0 items-center gap-2 border-b border-red-500/20 px-3 py-1.5">
+                        {icon && <span className="text-red-500">{icon}</span>}
+                        <span className="shrink-0 text-xs font-medium text-red-500">
+                          {name}
+                        </span>
+                        {hasSummary && (
+                          <span className="min-w-0 truncate font-mono text-xs text-red-400/70">
+                            {summary}
+                          </span>
+                        )}
+                      </div>
+                      <pre className="max-h-48 overflow-auto whitespace-pre-wrap break-all px-3 py-2 font-mono text-xs leading-relaxed text-red-400">
+                        {errorMessage}
+                      </pre>
                     </div>
-                    <p className="whitespace-pre-wrap break-all font-mono text-xs leading-relaxed text-red-600/90 dark:text-red-400/90">
-                      {errorMessage}
-                    </p>
-                  </div>
-                )}
+                  )}
                 {expandedContent}
               </div>
             )}

@@ -1,11 +1,13 @@
 "use client";
 
 import { toRelativePath } from "@open-harness/shared/lib/tool-state";
+import { Pencil } from "lucide-react";
 import { MultiFileDiff } from "@pierre/diffs/react";
 import { useMemo } from "react";
 import type { ToolRendererProps } from "@/app/lib/render-tool";
 import { defaultDiffOptions } from "@/lib/diffs-config";
 import { ToolLayout } from "../tool-layout";
+import { FileNamePill } from "../file-name-pill";
 
 export function EditRenderer({
   part,
@@ -62,7 +64,7 @@ export function EditRenderer({
 
   const expandedContent =
     showDiff && !mergedState.denied ? (
-      <div className="max-h-96 overflow-auto">
+      <div className="max-h-96 overflow-auto rounded-md border border-border">
         <MultiFileDiff
           oldFile={{ name: rawFilePath, contents: oldString }}
           newFile={{ name: rawFilePath, contents: newString }}
@@ -82,8 +84,14 @@ export function EditRenderer({
   return (
     <ToolLayout
       name="Update"
-      summary={filePath}
-      summaryClassName="font-mono"
+      icon={<Pencil className="h-3.5 w-3.5" />}
+      summary={
+        filePath === "..." ? (
+          filePath
+        ) : (
+          <FileNamePill filePath={filePath} fullPath={rawFilePath} />
+        )
+      }
       meta={meta}
       state={mergedState}
       expandedContent={expandedContent}

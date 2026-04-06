@@ -1,10 +1,12 @@
 "use client";
 
 import { toRelativePath } from "@open-harness/shared/lib/tool-state";
+import { FilePlus } from "lucide-react";
 import { File as DiffsFile } from "@pierre/diffs/react";
 import type { ToolRendererProps } from "@/app/lib/render-tool";
 import { defaultFileOptions } from "@/lib/diffs-config";
 import { ToolLayout } from "../tool-layout";
+import { FileNamePill } from "../file-name-pill";
 
 const wrappedFileExtensions = new Set([".md", ".mdx", ".markdown", ".txt"]);
 
@@ -47,7 +49,7 @@ export function WriteRenderer({
 
   const expandedContent =
     showCode && !mergedState.denied ? (
-      <div className="max-h-96 overflow-auto">
+      <div className="max-h-96 overflow-auto rounded-md border border-border">
         <DiffsFile
           file={{ name: rawFilePath, contents: content }}
           options={fileOptions}
@@ -66,8 +68,14 @@ export function WriteRenderer({
   return (
     <ToolLayout
       name="Create"
-      summary={filePath}
-      summaryClassName="font-mono"
+      icon={<FilePlus className="h-3.5 w-3.5" />}
+      summary={
+        filePath === "..." ? (
+          filePath
+        ) : (
+          <FileNamePill filePath={filePath} fullPath={rawFilePath} />
+        )
+      }
       meta={meta}
       state={mergedState}
       expandedContent={expandedContent}
