@@ -1,0 +1,25 @@
+{
+  "name": "@open-harness/adapters",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@open-harness/agent": "workspace:*",
+    "@open-harness/sandbox": "workspace:*",
+    "ai": "catalog:"
+  },
+  "devDependencies": {
+    "@open-harness/tsconfig": "workspace:*",
+    "@types/node": "^22"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

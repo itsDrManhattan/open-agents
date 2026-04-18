@@ -1,0 +1,28 @@
+{
+  "name": "@open-harness/harness",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./runner": "./runner.ts",
+    "./loader": "./loader.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@open-harness/adapters": "workspace:*",
+    "@open-harness/sandbox": "workspace:*",
+    "@open-harness/scorers": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@open-harness/tsconfig": "workspace:*",
+    "@types/node": "^22"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

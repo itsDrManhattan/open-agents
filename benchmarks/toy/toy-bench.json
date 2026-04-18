@@ -1,0 +1,55 @@
+{
+  "id": "toy-bench-v1",
+  "name": "Toy Bench",
+  "description": "Tiny benchmark for exercising the harness end-to-end. No external repo clones; everything is seeded inline.",
+  "version": "1",
+  "defaultTimeoutMs": 600000,
+  "tasks": [
+    {
+      "id": "hello-world",
+      "prompt": "Create a file named `hello.txt` at the root of the working directory. Its contents must be exactly the string `Hello, world!` (no trailing newline required).",
+      "setup": {
+        "files": {
+          "README.md": "# Toy task\n\nFollow the instructions in the prompt."
+        }
+      },
+      "scorers": [
+        { "type": "file-exists", "path": "hello.txt" },
+        {
+          "type": "shell",
+          "command": "grep -q 'Hello, world!' hello.txt"
+        }
+      ],
+      "tags": ["trivial", "file-io"]
+    },
+    {
+      "id": "add-function",
+      "prompt": "Write a Python module `mathutils.py` containing a function `add(a, b)` that returns the sum of its two arguments. Make sure the tests in `tests/test_add.py` pass when you run them with pytest.",
+      "setup": {
+        "files": {
+          "tests/test_add.py": "from mathutils import add\n\n\ndef test_add_positive():\n    assert add(2, 3) == 5\n\n\ndef test_add_zero():\n    assert add(0, 0) == 0\n\n\ndef test_add_negative():\n    assert add(-1, 1) == 0\n"
+        },
+        "setupCommands": ["pip install pytest --quiet"]
+      },
+      "scorers": [
+        { "type": "file-exists", "path": "mathutils.py" },
+        { "type": "pytest", "target": "tests/test_add.py" }
+      ],
+      "tags": ["python", "test-driven"]
+    },
+    {
+      "id": "fizzbuzz",
+      "prompt": "Implement a FizzBuzz function in `fizzbuzz.py`. The function `fizzbuzz(n: int) -> str` returns 'Fizz' for multiples of 3, 'Buzz' for multiples of 5, 'FizzBuzz' for multiples of 15, and the number as a string otherwise. Tests in `tests/test_fizzbuzz.py` must pass.",
+      "setup": {
+        "files": {
+          "tests/test_fizzbuzz.py": "import pytest\nfrom fizzbuzz import fizzbuzz\n\n\n@pytest.mark.parametrize('n,expected', [\n    (1, '1'),\n    (2, '2'),\n    (3, 'Fizz'),\n    (5, 'Buzz'),\n    (9, 'Fizz'),\n    (10, 'Buzz'),\n    (15, 'FizzBuzz'),\n    (30, 'FizzBuzz'),\n])\ndef test_fizzbuzz(n, expected):\n    assert fizzbuzz(n) == expected\n"
+        },
+        "setupCommands": ["pip install pytest --quiet"]
+      },
+      "scorers": [
+        { "type": "pytest", "target": "tests/test_fizzbuzz.py" }
+      ],
+      "tags": ["python", "classic"]
+    }
+  ]
+}
